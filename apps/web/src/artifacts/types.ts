@@ -30,12 +30,15 @@ export type ArtifactExportKind =
   | 'svg'
   | 'txt';
 
+export type ArtifactStatus = 'streaming' | 'complete' | 'error';
+
 export interface ArtifactManifest {
   version: 1;
   kind: ArtifactKind;
   title: string;
   entry: string;
   renderer: ArtifactRendererId;
+  status?: ArtifactStatus;
   exports: ArtifactExportKind[];
   /**
    * Reserved for future multi-file artifact packaging.
