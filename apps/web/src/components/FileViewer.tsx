@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { artifactRendererRegistry } from '../artifacts/renderer-registry';
+import { MarkdownRenderer, artifactRendererRegistry } from '../artifacts/renderer-registry';
 import { renderMarkdownToSafeHtml } from '../artifacts/markdown';
 import { useT } from '../i18n';
 import type { Dict } from '../i18n/types';
@@ -896,6 +896,9 @@ function MarkdownViewer({
   const [text, setText] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [copied, setCopied] = useState(false);
+  const status = file.artifactManifest?.status ?? 'complete';
+  const isStreaming = status === 'streaming';
+  const isError = status === 'error';
 
   useEffect(() => {
     setText(null);
@@ -931,12 +934,19 @@ function MarkdownViewer({
     }
   }
 
-  const html = useMemo(() => (text === null ? null : renderMarkdownToSafeHtml(text)), [text]);
+  const html = useMemo(() => {
+    if (text === null) return null;
+    const renderPartial = MarkdownRenderer.renderPartial ?? renderMarkdownToSafeHtml;
+    return renderPartial(text);
+  }, [text]);
 
   return (
     <div className="viewer text-viewer">
       <div className="viewer-toolbar">
-        <div className="viewer-toolbar-left" />
+        <div className="viewer-toolbar-left">
+          {isStreaming ? <span className="viewer-meta">Streaming preview…</span> : null}
+          {isError ? <span className="viewer-meta">Preview may be incomplete (generation error).</span> : null}
+        </div>
         <div className="viewer-toolbar-actions">
           <button
             type="button"
@@ -962,10 +972,15 @@ function MarkdownViewer({
         {html === null ? (
           <div className="viewer-empty">{t('fileViewer.loading')}</div>
         ) : (
-          <article
-            className="markdown-rendered"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+          <>
+            {isStreaming ? <div className="markdown-status">Streaming… showing partial markdown.</div> : null}
+            {isError ? <div className="markdown-status markdown-status-error">Generation error. Showing last available content.</div> : null}
+            {/* Safe by contract: renderMarkdownToSafeHtml escapes raw HTML and rejects unsafe link protocols. */}
+            <article
+              className="markdown-rendered"
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          </>
         )}
       </div>
     </div>

@@ -2769,6 +2769,20 @@ code {
   line-height: 1.65;
   white-space: normal;
 }
+.markdown-status {
+  margin: 12px auto 0;
+  max-width: 900px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.markdown-status-error {
+  border-color: color-mix(in oklab, var(--danger, #d04b4b) 45%, var(--border-soft));
+  color: var(--danger, #d04b4b);
+}
 .markdown-rendered h1,
 .markdown-rendered h2,
 .markdown-rendered h3,

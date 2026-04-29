@@ -38,6 +38,8 @@ export interface ArtifactManifest {
   title: string;
   entry: string;
   renderer: ArtifactRendererId;
+  // Optional for backward compatibility with older manifests.
+  // Frontend + daemon normalize missing status to "complete".
   status?: ArtifactStatus;
   exports: ArtifactExportKind[];
   /**

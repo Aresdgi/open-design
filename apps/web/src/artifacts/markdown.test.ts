@@ -42,6 +42,18 @@ describe('renderMarkdownToSafeHtml', () => {
     expect(out).toContain('<a href="https://example.com" rel="noreferrer noopener" target="_blank">Open</a>');
   });
 
+  it('keeps underscores inside href intact', () => {
+    const out = renderMarkdownToSafeHtml('[x](https://example.com/a_b_c)');
+    expect(out).toContain('<a href="https://example.com/a_b_c" rel="noreferrer noopener" target="_blank">x</a>');
+    expect(out).not.toContain('<em>b</em>');
+  });
+
+  it('escapes raw html inside link text', () => {
+    const out = renderMarkdownToSafeHtml('[<img src=x onerror=alert(1)>](https://example.com)');
+    expect(out).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(out).not.toContain('<img ');
+  });
+
   it('does not render unsafe link protocols', () => {
     const out = renderMarkdownToSafeHtml('[Bad](javascript:alert(1))');
     expect(out).toContain('<p>Bad)</p>');

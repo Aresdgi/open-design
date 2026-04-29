@@ -7,20 +7,30 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
+const LINK_TOKEN_PREFIX = 'ODMDLINKTOKEN';
+
 function formatInline(raw: string): string {
-  let out = escapeHtml(raw);
+  const linkTokens = new Map<string, string>();
+  let linkTokenIndex = 0;
+
+  const withLinkTokens = raw.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text: string, href: string) => {
+    const normalizedHref = normalizeSafeHref(href);
+    const safeText = escapeHtml(text);
+    if (!normalizedHref) return safeText;
+    const safeHref = escapeHtml(normalizedHref);
+    const rel = safeHref.startsWith('#') ? '' : ' rel="noreferrer noopener" target="_blank"';
+    const token = `${LINK_TOKEN_PREFIX}${linkTokenIndex++}X`;
+    linkTokens.set(token, `<a href="${safeHref}"${rel}>${safeText}</a>`);
+    return token;
+  });
+
+  let out = escapeHtml(withLinkTokens);
   out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
   out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   out = out.replace(/__([^_]+)__/g, '<strong>$1</strong>');
   out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   out = out.replace(/_([^_]+)_/g, '<em>$1</em>');
-  out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text: string, href: string) => {
-    const normalizedHref = normalizeSafeHref(href);
-    if (!normalizedHref) return text;
-    const safeHref = escapeHtml(normalizedHref);
-    const rel = safeHref.startsWith('#') ? '' : ' rel="noreferrer noopener" target="_blank"';
-    return `<a href="${safeHref}"${rel}>${text}</a>`;
-  });
+  out = out.replace(/ODMDLINKTOKEN\d+X/g, (token) => linkTokens.get(token) ?? token);
   return out;
 }
 
@@ -45,6 +55,11 @@ function headingLevel(line: string): number {
 }
 
 export function renderMarkdownToSafeHtml(markdown: string): string {
+  // Intentionally small markdown subset for conservative preview rendering.
+  // Supported: headings, paragraphs, blockquotes, ul/ol lists, fenced code,
+  // inline code, bold/italic, and links.
+  // Not supported on purpose: full CommonMark edge cases (nested lists,
+  // escaped markdown syntax, raw HTML blocks, tables, etc.).
   const lines = markdown.replace(/\r\n/g, '\n').split('\n');
   const out: string[] = [];
   let i = 0;

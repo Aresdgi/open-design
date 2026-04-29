@@ -113,4 +113,11 @@ describe('RendererRegistry', () => {
     expect(SvgRenderer.supportsStreaming).toBe(true);
     expect(SvgRenderer.renderPartial).toBeUndefined();
   });
+
+  it('keeps markdown partial renderer output safe', () => {
+    const out = MarkdownRenderer.renderPartial?.('[<script>alert(1)</script>](https://example.com/a_b_c)') ?? '';
+    expect(out).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(out).toContain('href="https://example.com/a_b_c"');
+    expect(out).not.toContain('<script>');
+  });
 });
