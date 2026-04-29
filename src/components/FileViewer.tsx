@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT } from '../i18n';
-import { fetchProjectFileText, projectFileUrl } from '../providers/registry';
+import { fetchProjectFileText, projectFileUrl, projectRawUrl } from '../providers/registry';
 import { exportAsHtml, exportAsPdf, exportAsZip } from '../runtime/exports';
 import { buildSrcdoc } from '../runtime/srcdoc';
 import { saveTemplate } from '../state/projects';
@@ -152,8 +152,11 @@ function HtmlViewer({
   const effectiveDeck = isDeck || looksLikeDeck;
 
   const srcDoc = useMemo(
-    () => (source ? buildSrcdoc(source, { deck: effectiveDeck }) : ''),
-    [source, effectiveDeck],
+    () => (source ? buildSrcdoc(source, {
+      deck: effectiveDeck,
+      baseHref: projectRawUrl(projectId, baseDirFor(file.name)),
+    }) : ''),
+    [source, effectiveDeck, projectId, file.name],
   );
 
   useEffect(() => {
@@ -633,6 +636,11 @@ function HtmlViewer({
       ) : null}
     </div>
   );
+}
+
+function baseDirFor(fileName: string): string {
+  const idx = fileName.lastIndexOf('/');
+  return idx >= 0 ? fileName.slice(0, idx + 1) : '';
 }
 
 function ImageViewer({
