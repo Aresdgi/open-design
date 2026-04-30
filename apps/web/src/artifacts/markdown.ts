@@ -8,12 +8,21 @@ function escapeHtml(value: string): string {
 }
 
 const LINK_TOKEN_PREFIX = 'ODMDLINKTOKEN';
+const CODE_TOKEN_PREFIX = 'ODMDCODETOKEN';
 
 function formatInline(raw: string): string {
   const linkTokens = new Map<string, string>();
+  const codeTokens = new Map<string, string>();
   let linkTokenIndex = 0;
+  let codeTokenIndex = 0;
 
-  const withLinkTokens = raw.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text: string, href: string) => {
+  const withCodeTokens = raw.replace(/`([^`]+)`/g, (_m, code: string) => {
+    const token = `${CODE_TOKEN_PREFIX}${codeTokenIndex++}X`;
+    codeTokens.set(token, `<code>${escapeHtml(code)}</code>`);
+    return token;
+  });
+
+  const withLinkTokens = withCodeTokens.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text: string, href: string) => {
     const normalizedHref = normalizeSafeHref(href);
     const safeText = escapeHtml(text);
     if (!normalizedHref) return safeText;
@@ -25,11 +34,11 @@ function formatInline(raw: string): string {
   });
 
   let out = escapeHtml(withLinkTokens);
-  out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
   out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   out = out.replace(/__([^_]+)__/g, '<strong>$1</strong>');
   out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   out = out.replace(/_([^_]+)_/g, '<em>$1</em>');
+  out = out.replace(/ODMDCODETOKEN\d+X/g, (token) => codeTokens.get(token) ?? token);
   out = out.replace(/ODMDLINKTOKEN\d+X/g, (token) => linkTokens.get(token) ?? token);
   return out;
 }

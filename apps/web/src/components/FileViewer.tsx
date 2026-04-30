@@ -944,8 +944,8 @@ function MarkdownViewer({
     <div className="viewer text-viewer">
       <div className="viewer-toolbar">
         <div className="viewer-toolbar-left">
-          {isStreaming ? <span className="viewer-meta">Streaming preview…</span> : null}
-          {isError ? <span className="viewer-meta">Preview may be incomplete (generation error).</span> : null}
+          {isStreaming ? <span className="viewer-meta">{t('fileViewer.markdownStreamingMeta')}</span> : null}
+          {isError ? <span className="viewer-meta">{t('fileViewer.markdownErrorMeta')}</span> : null}
         </div>
         <div className="viewer-toolbar-actions">
           <button
@@ -973,8 +973,8 @@ function MarkdownViewer({
           <div className="viewer-empty">{t('fileViewer.loading')}</div>
         ) : (
           <>
-            {isStreaming ? <div className="markdown-status">Streaming… showing partial markdown.</div> : null}
-            {isError ? <div className="markdown-status markdown-status-error">Generation error. Showing last available content.</div> : null}
+            {isStreaming ? <div className="markdown-status">{t('fileViewer.markdownStreamingStatus')}</div> : null}
+            {isError ? <div className="markdown-status markdown-status-error">{t('fileViewer.markdownErrorStatus')}</div> : null}
             {/* Safe by contract: renderMarkdownToSafeHtml escapes raw HTML and rejects unsafe link protocols. */}
             <article
               className="markdown-rendered"

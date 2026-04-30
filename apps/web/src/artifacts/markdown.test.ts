@@ -54,6 +54,14 @@ describe('renderMarkdownToSafeHtml', () => {
     expect(out).not.toContain('<img ');
   });
 
+  it('keeps markdown emphasis markers literal inside inline code', () => {
+    const out = renderMarkdownToSafeHtml('Use `**literal**` and `_literal_` as code.');
+    expect(out).toContain('<code>**literal**</code>');
+    expect(out).toContain('<code>_literal_</code>');
+    expect(out).not.toContain('<code><strong>literal</strong></code>');
+    expect(out).not.toContain('<code><em>literal</em></code>');
+  });
+
   it('does not render unsafe link protocols', () => {
     const out = renderMarkdownToSafeHtml('[Bad](javascript:alert(1))');
     expect(out).toContain('<p>Bad)</p>');
