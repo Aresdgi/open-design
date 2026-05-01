@@ -41,9 +41,24 @@ function cleanString(value: unknown): string | null {
 export function isPackagedRuntime({
   resourcesPath = processWithResources.resourcesPath,
   execPath = process.execPath,
-}: Pick<ResolveAppVersionInfoOptions, 'resourcesPath' | 'execPath'> = {}): boolean {
+  platform = process.platform,
+}: Pick<ResolveAppVersionInfoOptions, 'resourcesPath' | 'execPath' | 'platform'> = {}): boolean {
   if (cleanString(resourcesPath)) return true;
-  return cleanString(execPath)?.includes(`${process.platform === 'win32' ? '\\' : '/'}Contents${process.platform === 'win32' ? '\\' : '/'}Resources${process.platform === 'win32' ? '\\' : '/'}`) ?? false;
+  const normalizedExecPath = cleanString(execPath)?.replace(/\\/g, '/').toLowerCase();
+  if (!normalizedExecPath) return false;
+
+  switch (platform) {
+    case 'darwin':
+      return normalizedExecPath.includes('/contents/resources/');
+    case 'win32':
+      return normalizedExecPath.includes('/resources/') || normalizedExecPath.includes('/app.asar');
+    case 'linux':
+      return normalizedExecPath.includes('/usr/share/')
+        || normalizedExecPath.includes('/opt/')
+        || normalizedExecPath.includes('/resources/');
+    default:
+      return normalizedExecPath.includes('/resources/') || normalizedExecPath.includes('/app.asar');
+  }
 }
 
 export function resolveAppVersionInfo({
@@ -54,7 +69,7 @@ export function resolveAppVersionInfo({
   platform = process.platform,
   arch = process.arch,
 }: ResolveAppVersionInfoOptions = {}): AppVersionInfo {
-  const packaged = isPackagedRuntime({ resourcesPath, execPath });
+  const packaged = isPackagedRuntime({ resourcesPath, execPath, platform });
   const version = cleanString(packageMetadata?.version) ?? APP_VERSION_FALLBACK;
   const prereleaseChannel = version.match(/^\d+\.\d+\.\d+-([0-9A-Za-z-]+)/)?.[1]?.split('.')[0] ?? null;
   const channel = cleanString(env.OD_RELEASE_CHANNEL)
@@ -69,7 +84,7 @@ async function readPackageMetadata(packageJsonUrl: URL): Promise<PackageMetadata
   try {
     const raw = await readFile(packageJsonUrl, 'utf8');
     const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === 'object' ? parsed : null;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
   } catch {
     return null;
   }
