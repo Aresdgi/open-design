@@ -388,7 +388,7 @@ export function PreviewModal({
                 <iframe
                   key={activeView?.id ?? 'view'}
                   title={`${title} ${activeView?.label ?? ''}`}
-                  sandbox="allow-scripts allow-same-origin"
+                  sandbox="allow-scripts"
                   srcDoc={srcDoc}
                 />
               </div>
