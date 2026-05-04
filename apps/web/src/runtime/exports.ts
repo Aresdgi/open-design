@@ -12,7 +12,7 @@
 // PPTX export is fundamentally different — it asks the agent to convert the
 // artifact server-side, so it lives in ProjectView.tsx (not here).
 
-import { buildSrcdoc } from './srcdoc';
+import { buildSrcdoc, type SrcdocOptions } from './srcdoc';
 import { buildReactComponentSrcdoc } from './react-component';
 import { buildZip } from './zip';
 
@@ -193,8 +193,12 @@ export function buildSandboxedPreviewDocument(
 </html>`;
 }
 
-export function openSandboxedPreviewInNewTab(html: string, title: string): void {
-  const doc = buildSandboxedPreviewDocument(buildSrcdoc(html), title);
+export function openSandboxedPreviewInNewTab(
+  html: string,
+  title: string,
+  srcdocOptions?: SrcdocOptions,
+): void {
+  const doc = buildSandboxedPreviewDocument(buildSrcdoc(html, srcdocOptions), title);
   const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank', 'noopener,noreferrer');
@@ -219,19 +223,20 @@ export function openSandboxedPreviewInNewTab(html: string, title: string): void 
 export function exportAsPdf(
   html: string,
   title: string,
-  opts?: { deck?: boolean; sandboxedPreview?: boolean },
+  opts?: SrcdocOptions & { sandboxedPreview?: boolean },
 ): void {
-  let doc = buildSrcdoc(html);
+  const sandboxedPreview = opts?.sandboxedPreview ?? true;
+  let doc = buildSrcdoc(html, opts);
   if (opts?.deck) doc = injectDeckPrintStylesheet(doc);
   doc = injectPrintScript(doc, title);
-  if (opts?.sandboxedPreview) {
+  if (sandboxedPreview) {
     // `allow-modals` is needed so the child can show the browser print dialog;
     // it still does not grant same-origin access to the generated document.
     doc = buildSandboxedPreviewDocument(doc, title, { allowModals: true });
   }
   const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const win = window.open(url, '_blank', opts?.sandboxedPreview ? 'noopener,noreferrer' : undefined);
+  const win = window.open(url, '_blank', sandboxedPreview ? 'noopener,noreferrer' : undefined);
   if (!win) {
     // Popup blocked — at least the tab navigation may have happened above.
     // Nothing else we can do without a fresh user gesture.
