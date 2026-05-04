@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
-import { exportAsHtml, exportAsPdf, exportAsZip } from '../runtime/exports';
+import { exportAsHtml, exportAsPdf, exportAsZip, openSandboxedPreviewInNewTab } from '../runtime/exports';
 import { buildSrcdoc } from '../runtime/srcdoc';
 
 export interface PreviewView {
@@ -223,10 +223,7 @@ export function PreviewModal({
 
   function openInNewTab() {
     if (!activeHtml) return;
-    const blob = new Blob([activeHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank', 'noopener,noreferrer');
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    openSandboxedPreviewInNewTab(activeHtml, exportTitle);
   }
 
   function enterFullscreen() {
@@ -314,7 +311,7 @@ export function PreviewModal({
                     role="menuitem"
                     onClick={() => {
                       setShareOpen(false);
-                      if (activeHtml) exportAsPdf(activeHtml, exportTitle);
+                      if (activeHtml) exportAsPdf(activeHtml, exportTitle, { sandboxedPreview: true });
                     }}
                   >
                     <span className="share-menu-icon">📄</span>
