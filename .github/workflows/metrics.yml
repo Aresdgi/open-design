@@ -27,24 +27,22 @@ jobs:
           # Requires manual review to merge. If metrics unchanged, no PR is created.
           filename: docs/assets/github-metrics.svg
 
-          # Auth: METRICS_TOKEN must be a fine-grained PAT or GitHub App token that
-          # can create pull requests in this repository. GITHUB_TOKEN is kept only
-          # as a read/render fallback because many orgs disallow PR creation from it.
+          # Auth: METRICS_TOKEN may be provided for higher API limits. The
+          # repository also allows GITHUB_TOKEN to create the scheduled refresh PR.
           token: ${{ secrets.METRICS_TOKEN || secrets.GITHUB_TOKEN }}
-          committer_token: ${{ secrets.METRICS_TOKEN }}
           output_action: pull-request
           output_condition: data-changed
 
           # Use the repository template (per-repo metrics, not user metrics).
-          # Organization-owned repositories must be targeted explicitly, otherwise
-          # lowlighter/metrics infers the token owner and treats the target as an org.
+          # Keep this dynamic so forks render their own repository instead of the
+          # upstream owner repository.
           template: repository
           base: ''
-          user: nexu-io
-          repo: open-design
+          user: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
 
-          # Plugins. Anything that requires a personal token will silently no-op
-          # without METRICS_TOKEN — the rest still produce a useful SVG.
+          # Plugins. Avoid traffic metrics because the default Actions token cannot
+          # read repository traffic and the action fails hard instead of no-oping.
           plugin_contributors: yes
           plugin_contributors_categories: |
             {
@@ -60,7 +58,7 @@ jobs:
           plugin_languages_details: lines, percentage
           plugin_languages_limit: 8
           plugin_lines: yes
-          plugin_traffic: yes
+          plugin_traffic: no
           plugin_stargazers: yes
           plugin_stargazers_charts_type: chartist
 

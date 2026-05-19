@@ -40,9 +40,8 @@ jobs:
       - name: Create refresh pull request
         uses: peter-evans/create-pull-request@v8
         with:
-          # Auth mirrors the metrics workflow: prefer a repository token that can
-          # create pull requests, with GITHUB_TOKEN as a fallback for repos where
-          # Actions-created PRs are allowed.
+          # GITHUB_TOKEN can create the scheduled refresh PR because the repository
+          # allows Actions-created pull requests.
           token: ${{ secrets.METRICS_TOKEN || secrets.GITHUB_TOKEN }}
           add-paths: 'README*.md'
           branch: automation/refresh-contributors-wall
